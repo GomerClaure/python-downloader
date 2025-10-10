@@ -1,0 +1,67 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+ffmpeg*
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.project_venv/
+proyect_y/
+.downloads/
+descarga/
+.cache/
+.cache/
+*.egg-info/
+dist/
+build/
+
+# PyInstaller
+*.spec
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Test and coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+*.log
+
+# pipenv
+Pipfile.lock
+
+# mypy
+.mypy_cache/
+.dmypy.json
+.pyre/
+
+# Pyre type checker
+.pyre/
+
+# Others
+*.sqlite3
+*.db
+*.pdb
+*.log
+*.pot
+*.mo
+*.swp
+*.swo
+*.bak
+*.tmp
