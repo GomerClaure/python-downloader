@@ -25,3 +25,13 @@ pip install pytube requests
 ```
 
 Se recomienda crear un entorno virtual para aislar las dependencias del proyecto.
+
+# Uso
+Para utilizar la aplicación, sigue estos pasos:
+1. Clona el repositorio.
+2. Navega al directorio del proyecto.
+3. Ejecuta el script principal con los argumentos necesarios para descargar videos.
+    ```bash
+    python main_gui.py
+    ```
+4. Sigue las instrucciones en pantalla para descargar los videos deseados.
