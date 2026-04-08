@@ -4,6 +4,8 @@ import yt_dlp
 import instaloader
 import shutil
 import sys
+import requests
+from urllib.parse import urlparse, unquote
 
 class UniversalDownloader:
     # ... (el __init__ y los callbacks se mantienen igual) ...
@@ -73,7 +75,17 @@ class UniversalDownloader:
                 return self.download_instagram_content(url, download_folder)
             
             # Pasamos las nuevas opciones a la función de yt-dlp
-            return self.download_with_yt_dlp(url, download_folder, platform, download_playlist, recode_video, download_type)
+            if self.is_direct_media_url(url):
+                return self.download_direct_file(url, download_folder)
+            
+            return self.download_with_yt_dlp(
+                url,
+                download_folder,
+                platform,
+                download_playlist,
+                recode_video,
+                download_type
+            )
                 
         except Exception as e:
             error_msg = f"Error inesperado: {str(e)}"
@@ -174,3 +186,84 @@ class UniversalDownloader:
             error_msg = f"Error de Instaloader: {str(e)}"
             self._update_status(error_msg, "red")
             return {'status': 'error', 'message': error_msg}
+    
+    def is_direct_media_url(self, url):
+        url_lower = url.lower()
+        media_exts = (
+            '.mp4', '.mp3', '.m4a', '.webm', '.mkv',
+            '.mov', '.avi', '.wav', '.flac', '.aac', '.ogg'
+        )
+
+        # Caso normal: URL termina en extensión multimedia
+        if any(url_lower.split('?')[0].endswith(ext) for ext in media_exts):
+            return True
+
+        # Caso Wayback Machine apuntando a archivo multimedia
+        if 'web.archive.org/web/' in url_lower and any(ext in url_lower for ext in media_exts):
+            return True
+
+        return False
+
+
+    def _safe_filename_from_url(self, url, default_name="archivo"):
+        parsed = urlparse(url)
+        raw_name = os.path.basename(parsed.path)
+        raw_name = unquote(raw_name).split('?')[0].strip()
+
+        if not raw_name:
+            raw_name = default_name
+
+        # Sanitizar para evitar caracteres problemáticos
+        raw_name = re.sub(r'[<>:"/\\|?*\n\r\t]', '_', raw_name)
+        return raw_name
+
+
+    def download_direct_file(self, url, path):
+        try:
+            self._update_status("Detectado archivo directo. Descargando con requests...", "orange")
+
+            headers = {
+                "User-Agent": "Mozilla/5.0"
+            }
+
+            with requests.get(url, stream=True, headers=headers, timeout=30) as r:
+                r.raise_for_status()
+
+                filename = self._safe_filename_from_url(url, "video.mp4")
+
+                # Si Wayback deja un nombre raro o sin extensión, forzar una extensión razonable
+                if '.' not in filename:
+                    content_type = r.headers.get("Content-Type", "").lower()
+                    if "mp4" in content_type:
+                        filename += ".mp4"
+                    elif "mpeg" in content_type or "mp3" in content_type:
+                        filename += ".mp3"
+                    else:
+                        filename += ".bin"
+
+                full_path = os.path.join(path, filename)
+
+                total_size = int(r.headers.get("content-length", 0))
+                downloaded = 0
+
+                with open(full_path, "wb") as f:
+                    for chunk in r.iter_content(chunk_size=1024 * 256):
+                        if not chunk:
+                            continue
+                        f.write(chunk)
+                        downloaded += len(chunk)
+
+                        if total_size > 0:
+                            percentage = (downloaded / total_size) * 100
+                            self._update_progress(percentage)
+                            self._update_status(f"Descargando archivo directo... {percentage:.1f}%", "orange")
+
+            self._update_progress(100)
+            success_msg = f"Archivo descargado exitosamente: {filename}"
+            self._update_status(success_msg, "green")
+            return {"status": "success", "message": success_msg, "path": full_path}
+
+        except Exception as e:
+            error_msg = f"Error en descarga directa: {str(e)}"
+            self._update_status(error_msg, "red")
+            return {"status": "error", "message": error_msg}
