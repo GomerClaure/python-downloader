@@ -94,7 +94,8 @@ class UniversalDownloader:
 
     def download_with_yt_dlp(self, url, path, platform, download_playlist=False, recode_video=False, download_type="video"):
         try:
-            out_template = '%(playlist_index)s - %(title)s.%(ext)s' if download_playlist else '%(title)s.%(ext)s'
+            #nombres de archivos muy grandes daran error
+            out_template = "%(title).50B.%(ext)s"  # Limita el título a 50 caracteres para evitar errores de nombre de archivo
 
             ydl_opts = {
                 'outtmpl': os.path.join(path, out_template),
